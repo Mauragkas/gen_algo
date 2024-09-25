@@ -26,20 +26,27 @@ pub fn uniform_crossover<const D: usize>(frog1: &Frog<D>, frog2: &Frog<D>) -> (F
     let mut random_bits = vec![false; D];
 
     // Generate all random bits in one go
-    random_bits.iter_mut().map(|bit| *bit = rng.gen_bool(0.5)).count();
+    random_bits
+        .iter_mut()
+        .map(|bit| *bit = rng.gen_bool(0.5))
+        .count();
 
     let mut child1 = Frog::new([0; D], 0);
     let mut child2 = Frog::new([0; D], 0);
 
-    random_bits.iter().enumerate().map(|(i, &bit)| {
-        if bit {
-            child1.chromosome[i] = frog1.chromosome[i];
-            child2.chromosome[i] = frog2.chromosome[i];
-        } else {
-            child1.chromosome[i] = frog2.chromosome[i];
-            child2.chromosome[i] = frog1.chromosome[i];
-        }
-    }).count();
+    random_bits
+        .iter()
+        .enumerate()
+        .map(|(i, &bit)| {
+            if bit {
+                child1.chromosome[i] = frog1.chromosome[i];
+                child2.chromosome[i] = frog2.chromosome[i];
+            } else {
+                child1.chromosome[i] = frog2.chromosome[i];
+                child2.chromosome[i] = frog1.chromosome[i];
+            }
+        })
+        .count();
 
     (child1, child2)
 }
