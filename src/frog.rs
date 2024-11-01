@@ -8,14 +8,14 @@ pub(crate) struct Frog<const D: usize> {
     pub fitness: u32,
 }
 
-pub trait NewTrait<const D: usize> {
+pub trait FrogTrait<const D: usize> {
     fn new(chromosome: [u8; D], fitness: u32) -> Frog<D>;
     fn set_chromosome(&mut self, chromosome: [u8; D]);
     fn get_chromosome(&self) -> &[u8; D];
     fn fitness_function(&mut self);
 }
 
-impl<const D: usize> NewTrait<D> for Frog<D> {
+impl<const D: usize> FrogTrait<D> for Frog<D> {
     fn new(chromosome: [u8; D], fitness: u32) -> Frog<D> {
         Frog {
             chromosome,

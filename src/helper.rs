@@ -1,8 +1,8 @@
 #![allow(unused)]
 use crate::frog::Frog;
-use crate::NewTrait;
+use crate::FrogTrait;
 use csv::Writer;
-use rand::Rng;
+use rand::{thread_rng, Rng};
 use rayon::prelude::*;
 
 pub fn find_max_fitness_and_frequency<const N: usize, const D: usize>(
@@ -40,23 +40,75 @@ pub fn find_max_fitness_and_frequency<const N: usize, const D: usize>(
     (max_fitness, frequency)
 }
 
+#[inline]
 pub fn give_chromosome<const D: usize>() -> ([u8; D], u32) {
-    let mut chromosome = [0; D];
-    let mut fitness = 0;
-    for i in 0..D {
-        chromosome[i] = rand::random::<u8>() % 2;
-        fitness += chromosome[i] as u32;
+    let mut rng = thread_rng();
+    let mut chromosome = [0u8; D];
+    let mut fitness = 0u32;
+
+    // Process 8 bits at a time
+    for chunk in chromosome.chunks_mut(8) {
+        let random_byte: u8 = rng.gen();
+        for (i, bit) in chunk.iter_mut().enumerate() {
+            *bit = (random_byte >> i) & 1;
+            fitness += *bit as u32;
+        }
     }
+
     (chromosome, fitness)
 }
 
+/// Alternative implementation for very large D
+#[inline]
+pub fn give_chromosome_large<const D: usize>() -> ([u8; D], u32) {
+    let mut rng = thread_rng();
+    let mut chromosome = [0u8; D];
+
+    // Generate random bytes and count bits in chunks
+    let mut fitness = 0u32;
+    const CHUNK_SIZE: usize = 1024;
+
+    for chunk in chromosome.chunks_mut(CHUNK_SIZE) {
+        // Fill chunk with random bytes (0 or 1)
+        rng.fill(chunk);
+        for byte in chunk.iter_mut() {
+            *byte = *byte & 1;
+            fitness += *byte as u32;
+        }
+    }
+
+    (chromosome, fitness)
+}
+
+#[inline]
 pub fn init_population<const N: usize, const D: usize>() -> [Frog<D>; N] {
-    let mut population: [Frog<D>; N] = [Frog::new([0; D], 0); N]; // Initialize with zeroes
-    population.par_iter_mut().for_each(|frog| {
-        let (chromosome, fitness) = give_chromosome::<D>();
-        frog.set_chromosome(chromosome);
-        frog.fitness = fitness;
+    let mut population = [Frog::new([0; D], 0); N];
+
+    // Determine optimal chunk size based on D
+    let chunk_size = if D < 1024 {
+        // Use smaller chunks for small chromosomes
+        N.min(256)
+    } else {
+        // Use larger chunks for big chromosomes to reduce thread overhead
+        N.min(64)
+    };
+
+    // Process population in chunks for better cache utilization
+    population.par_chunks_mut(chunk_size).for_each(|chunk| {
+        let mut rng = thread_rng();
+        for frog in chunk {
+            // Choose appropriate chromosome generation method based on size
+            let (chromosome, fitness) = if D < 1024 {
+                give_chromosome::<D>()
+            } else {
+                give_chromosome_large::<D>()
+            };
+
+            frog.set_chromosome(chromosome);
+            frog.fitness = fitness;
+        }
     });
+
     population
 }
 
