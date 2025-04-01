@@ -17,7 +17,7 @@ mod select;
 
 fn main() {
     let start = Instant::now();
-    const N: usize = 300; // Population size
+    const N: usize = 12 * 26; // Population size
     const D: usize = 64; // Chromosome size
     const MUTATION_RATE: f64 = 0.001;
     let generations: i32 = 100;
